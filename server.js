@@ -18,14 +18,25 @@ app.listen(PORT, () => {
 });
 
 app.post('/login', (req, res) => {
-  const { username, password } = req.body;
+  const { id, password } = req.body;
 
-  // 예: DB에서 사용자 검증 (지금은 하드코딩 예시)
-  if (username === 'sym03' && password === '1234') {
-    // 로그인 성공: 대시보드로 리디렉션
-    res.redirect('/Dashboard.html');
+  // 예시 유저 (실제로는 DB에서 조회)
+  const users = [
+    { id: "sym03", password: "1234", name: "이재원", role: "NAS" }
+  ];
+
+  const user = users.find(u => u.id === id && u.password === password);
+
+  if (user) {
+    res.json({
+      success: true,
+      name: user.name,
+      role: user.role
+    });
   } else {
-    // 로그인 실패: 다시 로그인 화면으로
-    res.redirect('/Locked.html');
+    res.status(401).json({
+      success: false,
+      message: "아이디 또는 비밀번호가 틀렸습니다."
+    });
   }
 });
