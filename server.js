@@ -47,7 +47,9 @@ app.use((req, res, next) => {
 app.post("/login", (req, res) => {
   const { username, password } = req.body;
 
-  const student = students.find(s => s.id === username && s.password === password);
+  const match = students.find(s => s.id === username && s.password === password);
+  writeLog(`🛂 입력 정보 - ID: ${username}, PW: ${password}, 일치 여부: ${!!match}`);
+  const student = match;
   if (!student) {
     writeLog(`❌ 로그인 실패: ID=${username}`);
     return res.status(401).json({ success: false, message: "아이디 또는 비밀번호가 틀립니다." });
