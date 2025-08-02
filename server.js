@@ -25,8 +25,13 @@ app.use(session({
   secret: "sym-class-secret-key",
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 15 * 60 * 1000 } // 15분
+  cookie: {
+    maxAge: 15 * 60 * 1000,
+    secure: process.env.NODE_ENV === "production"
+  }
 }));
+
+app.use(express.static(path.join(__dirname, "public")));
 
 // CORS 허용 (클라이언트가 다른 포트에서 접근 시 필요)
 app.use((req, res, next) => {
@@ -40,11 +45,11 @@ app.use((req, res, next) => {
 
 // ✅ 로그인 처리
 app.post("/login", (req, res) => {
-  const { id, password } = req.body;
+  const { username, password } = req.body;
 
-  const student = students.find(s => s.id === id && s.password === password);
+  const student = students.find(s => s.id === username && s.password === password);
   if (!student) {
-    writeLog(`❌ 로그인 실패: ID=${id}`);
+    writeLog(`❌ 로그인 실패: ID=${username}`);
     return res.status(401).json({ success: false, message: "아이디 또는 비밀번호가 틀립니다." });
   }
 
