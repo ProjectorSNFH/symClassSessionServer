@@ -35,8 +35,14 @@ function writeLog(message) {
 // 🔐 로그인 엔드포인트
 app.post('/login', (req, res) => {
   const { id, password } = req.body;
+  const sessionId = req.sessionID;
 
   const user = students.find(u => u.id === id && u.password === password);
+
+  // 로그에 세션ID, 입력된 ID/PW, 로그인 성공 여부 기록
+  writeLog(
+    `🔐 로그인 시도: 세션=${sessionId}, 입력 ID=${id}, PW=${password}, 결과=${user ? '✅ 성공' : '❌ 실패'}`
+  );
 
   if (user) {
     req.session.user = {
@@ -45,10 +51,8 @@ app.post('/login', (req, res) => {
       number: user.number,
       role: user.role
     };
-    writeLog(`✅ 로그인: ${user.name} (${user.id})`);
     res.send({ success: true, user: req.session.user });
   } else {
-    writeLog(`❌ 로그인 실패: ${id}`);
     res.status(401).send({ success: false, message: '아이디 또는 비밀번호가 틀렸습니다.' });
   }
 });
