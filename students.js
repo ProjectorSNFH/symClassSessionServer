@@ -2,7 +2,7 @@
 
 const students = [
   {
-    number: 0,
+    number: "♾️",
     name: "관리자",
     id: "admin",
     password: "admin123",

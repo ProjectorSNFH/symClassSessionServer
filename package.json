@@ -1,16 +1,26 @@
 {
-  "name": "symclassnodeserver",
+  "name": "symclasssessionserver",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ProjectorSNFH/symClassSessionServer.git"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ProjectorSNFH/symClassSessionServer/issues"
+  },
+  "homepage": "https://github.com/ProjectorSNFH/symClassSessionServer#readme",
   "description": "",
   "dependencies": {
+    "body-parser": "^2.2.0",
     "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
     "express": "^5.1.0",
     "express-session": "^1.18.2"
   }
