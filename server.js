@@ -59,7 +59,7 @@ app.post('/login', (req, res) => {
       number: user.number,
       role: user.role
     };
-    res.send({ success: true, user: req.session.user });
+    res.status(200).json({ success: true, user: req.session.user });
   } else {
     res.status(401).send({ success: false, message: '아이디 또는 비밀번호가 틀렸습니다.' });
   }
