@@ -10,6 +10,14 @@ const students = require('./students');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// server.js 안에서만 사용
+const cors = require('cors');
+
+app.use(cors({
+  origin: 'https://symclasswebstatic.onrender.com', // 네 사이트 주소
+  credentials: true
+}));
+
 // 로그 파일 경로
 const logFile = path.join(__dirname, 'sessionLogs.txt');
 
