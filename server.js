@@ -1,101 +1,87 @@
-// server.js
-const express = require('express');
-const session = require('express-session');
-const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
-const fs = require('fs');
-const path = require('path');
-const students = require('./students');
+const express = require("express");
+const session = require("express-session");
+const cors = require("cors");
+const students = require("./students");
+const fs = require("fs");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// server.js 안에서만 사용
-const cors = require('cors');
+// 로그 기록용 배열
+const logs = [];
 
+function log(message) {
+  const timestamp = new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
+  const entry = `[${timestamp}] ${message}`;
+  logs.push(entry);
+  console.log(entry);
+}
+
+// 세션 설정
+app.use(session({
+  secret: "sym-class-secret",
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    maxAge: 15 * 60 * 1000, // 15분
+  }
+}));
+
+// CORS 설정 (프론트엔드 도메인 허용)
 app.use(cors({
-  origin: 'https://symclassg1c5.onrender.com/', // 네 사이트 주소
+  origin: "https://symclassg1c5.onrender.com",
   credentials: true
 }));
 
-// 로그 파일 경로
-const logFile = path.join(__dirname, 'sessionLogs.txt');
+app.use(express.json());
 
-// 미들웨어
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cookieParser());
-app.use(session({
-  secret: 'symClassSecretKey',  // 보안을 위해 .env 파일로 추출 가능
-  resave: false,
-  saveUninitialized: false,
-  cookie: { maxAge: 15 * 60 * 1000 }  // 15분
-}));
+// 로그인 API
+app.post("/login", (req, res) => {
+  const { username, password } = req.body;
 
-// 로그 저장 함수
-function writeLog(message) {
-  const timestamp = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
-  const fullMessage = `[${timestamp}] ${message}\n`;
-  fs.appendFileSync(logFile, fullMessage);
-  console.log(fullMessage.trim());
-}
-
-// 🔐 로그인 엔드포인트
-app.post('/login', (req, res) => {
-  const { id, password } = req.body;
-  const sessionId = req.sessionID;
-
-  const user = students.find(u => u.id === id && u.password === password);
-
-  // 로그에 세션ID, 입력된 ID/PW, 로그인 성공 여부 기록
-  writeLog(
-    `🔐 로그인 시도: 세션=${sessionId}, 입력 ID=${id}, PW=${password}, 결과=${user ? '✅ 성공' : '❌ 실패'}`
-  );
-
-  if (user) {
-    req.session.user = {
-      id: user.id,
-      name: user.name,
-      number: user.number,
-      role: user.role
-    };
-    res.status(200).json({ success: true, user: req.session.user });
-  } else {
-    res.status(401).send({ success: false, message: '아이디 또는 비밀번호가 틀렸습니다.' });
+  const user = students.find(s => s.id === username && s.password === password);
+  if (!user) {
+    log(`로그인 실패 (ID: ${username})`);
+    return res.status(401).json({ message: "아이디 또는 비밀번호가 틀립니다." });
   }
+
+  req.session.user = {
+    name: user.name,
+    number: user.number,
+    role: user.role,
+    id: user.id,
+  };
+
+  log(`로그인 성공: ${user.name} (${user.id})`);
+  res.json({ success: true, name: user.name, number: user.number, role: user.role });
 });
 
-// 🔓 로그아웃 엔드포인트
-app.post('/logout', (req, res) => {
+// 로그아웃 API
+app.post("/logout", (req, res) => {
   if (req.session.user) {
-    writeLog(`🔓 로그아웃: ${req.session.user.name} (${req.session.user.id})`);
+    log(`로그아웃: ${req.session.user.name} (${req.session.user.id})`);
   }
   req.session.destroy(() => {
-    res.clearCookie('connect.sid');
-    res.send({ success: true });
+    res.json({ success: true });
   });
 });
 
-// 🧾 로그 보기 엔드포인트
-app.get('/log', (req, res) => {
-  try {
-    const logs = fs.readFileSync(logFile, 'utf-8');
-    res.type('text').send(logs);
-  } catch (err) {
-    res.status(500).send('로그를 불러올 수 없습니다.');
+// 현재 로그인된 사용자 정보
+app.get("/me", (req, res) => {
+  if (req.session.user) {
+    res.json({ loggedIn: true, user: req.session.user });
+  } else {
+    res.json({ loggedIn: false });
   }
 });
 
-// 🔍 로그인된 사용자 정보 가져오기
-app.get('/me', (req, res) => {
-  if (req.session.user) {
-    res.send({ loggedIn: true, user: req.session.user });
-  } else {
-    res.send({ loggedIn: false });
-  }
+// 로그 출력
+app.get("/log", (req, res) => {
+  res.setHeader("Content-Type", "text/plain; charset=utf-8");
+  res.send(logs.join("\n"));
 });
 
 app.listen(PORT, () => {
-  console.log(`✅ SessionServer 실행 중 (PORT: ${PORT})`);
-  writeLog(`🟢 SessionServer 시작됨`);
+  console.log(`SessionServer is running on port ${PORT}`);
+  log("서버 시작됨");
 });
