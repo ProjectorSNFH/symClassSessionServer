@@ -48,6 +48,12 @@ app.post("/login", (req, res) => {
     return res.status(401).json({ message: "아이디 또는 비밀번호가 틀립니다." });
   }
 
+  if (activeUsers.has(user.id)) {
+    log(`중복 로그인 차단: ${user.name} (${user.id})`);
+    activeUsers.delete(user.id); // 기존 세션 제거
+    return res.status(403).json({ blocked: true });
+  }
+
   req.session.user = {
     name: user.name,
     number: user.number,
