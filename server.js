@@ -41,7 +41,7 @@ app.post("/login", (req, res) => {
 
   const user = students.find(s => s.id === username && s.password === password);
   if (!user) {
-    log(`로그인 실패 (ID: ${username})`);
+    log(`로그인 시도 : I(${username}) P(${password}) isAccess= False`);
     return res.status(401).json({ message: "아이디 또는 비밀번호가 틀립니다." });
   }
 
@@ -52,7 +52,7 @@ app.post("/login", (req, res) => {
     id: user.id,
   };
 
-  log(`로그인 성공: ${user.name} (${user.id})`);
+  log(`로그인 시도 : I(${username}) P(${password}) isAccess= True`);
   res.json({ success: true, name: user.name, number: user.number, role: user.role });
 });
 
