@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 3000;
 const cors = require('cors');
 
 app.use(cors({
-  origin: 'https://symclassnodeserver.onrender.com', // 네 사이트 주소
+  origin: 'https://symclassg1c5.onrender.com/', // 네 사이트 주소
   credentials: true
 }));
 
