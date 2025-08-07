@@ -10,6 +10,9 @@ const PORT = process.env.PORT || 3000;
 // 로그 기록용 배열
 const logs = [];
 
+// 현재 로그인 사용자 추적용 Map
+const activeUsers = new Map();
+
 function log(message) {
   const timestamp = new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
   const entry = `[${timestamp}] ${message}`;
@@ -51,6 +54,8 @@ app.post("/login", (req, res) => {
     role: user.role,
     id: user.id,
   };
+  // 로그인 시 activeUsers에 추가
+  activeUsers.set(user.id, user.name);
 
   log(`로그인 시도 : I(${username}) P(${password}) isAccess= True`);
   res.json({ success: true, name: user.name, number: user.number, role: user.role });
@@ -59,6 +64,8 @@ app.post("/login", (req, res) => {
 // 로그아웃 API
 app.post("/logout", (req, res) => {
   if (req.session.user) {
+    // 로그아웃 시 activeUsers에서 제거
+    activeUsers.delete(req.session.user.id);
     log(`로그아웃: ${req.session.user.name} (${req.session.user.id})`);
   }
   req.session.destroy(() => {
@@ -79,6 +86,61 @@ app.get("/me", (req, res) => {
 app.get("/log", (req, res) => {
   res.setHeader("Content-Type", "text/plain; charset=utf-8");
   res.send(logs.join("\n"));
+});
+
+// 관리자용 루트 페이지 제공
+app.get("/", (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="ko">
+    <head>
+      <meta charset="UTF-8">
+      <title>SessionServer 관리자 도구</title>
+      <style>
+        body { font-family: sans-serif; padding: 2em; }
+        input[type="text"] { width: 200px; padding: 5px; font-size: 1em; }
+        pre { margin-top: 1em; background: #f0f0f0; padding: 1em; border-radius: 5px; }
+      </style>
+    </head>
+    <body>
+      <h2>관리자 명령어 실행</h2>
+      <input type="text" id="cmdInput" placeholder="명령어 입력 후 Enter" />
+      <pre id="output"></pre>
+
+      <script>
+        const input = document.getElementById('cmdInput');
+        const output = document.getElementById('output');
+
+        input.addEventListener('keydown', async (e) => {
+          if (e.key === 'Enter') {
+            const command = input.value.trim().toLowerCase();
+            input.value = '';
+            if (command === 'users') {
+              const res = await fetch('/current-users');
+              const text = await res.text();
+              output.textContent = text;
+            } else {
+              output.textContent = '지원하지 않는 명령어입니다.';
+            }
+          }
+        });
+      </script>
+    </body>
+    </html>
+  `);
+});
+
+// 현재 로그인 사용자 목록 반환
+app.get("/current-users", (req, res) => {
+  if (activeUsers.size === 0) {
+    res.send("현재 로그인한 사용자가 없습니다.");
+  } else {
+    const list = Array.from(activeUsers.entries())
+      .map(([id, name]) => `• ${name} (${id})`)
+      .join("\n");
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+    res.send("현재 로그인 사용자 목록:\n" + list);
+  }
 });
 
 app.listen(PORT, () => {
