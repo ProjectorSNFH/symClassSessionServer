@@ -13,9 +13,10 @@ const logs = [];
 // 현재 로그인 사용자 추적용 Map
 const activeUsers = new Map();
 
-function log(message) {
+function log(message, sessionID = "") {
   const timestamp = new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
-  const entry = `[${timestamp}] ${message}`;
+  const sessionTag = sessionID ? ` [Session: ${sessionID}]` : "";
+  const entry = `[${timestamp}]${sessionTag} ${message}`;
   logs.push(entry);
   console.log(entry);
 }
@@ -36,7 +37,17 @@ app.use(cors({
   credentials: true
 }));
 
+
 app.use(express.json());
+
+// 요청마다 세션 갱신
+app.use((req, res, next) => {
+  if (req.session) {
+    req.session._garbage = Date();
+    req.session.touch();
+  }
+  next();
+});
 
 // 로그인 API
 app.post("/login", (req, res) => {
@@ -44,12 +55,12 @@ app.post("/login", (req, res) => {
 
   const user = students.find(s => s.id === username && s.password === password);
   if (!user) {
-    log(`로그인 시도 : I(${username}) P(${password}) isAccess= False`);
+    log(`로그인 시도 : I(${username}) P(${password}) isAccess= False`, req.sessionID);
     return res.status(401).json({ message: "아이디 또는 비밀번호가 틀립니다." });
   }
 
   if (activeUsers.has(user.id)) {
-    log(`중복 로그인 차단: ${user.name} (${user.id})`);
+    log(`중복 로그인 차단: ${user.name} (${user.id})`, req.sessionID);
     activeUsers.delete(user.id); // 기존 세션 제거
     return res.status(403).json({ blocked: true });
   }
@@ -63,7 +74,7 @@ app.post("/login", (req, res) => {
   // 로그인 시 activeUsers에 추가
   activeUsers.set(user.id, user.name);
 
-  log(`로그인 시도 : I(${username}) P(${password}) isAccess= True`);
+  log(`로그인 시도 : I(${username}) P(${password}) isAccess= True`, req.sessionID);
   res.json({ success: true, name: user.name, number: user.number, role: user.role });
 });
 
@@ -72,7 +83,7 @@ app.post("/logout", (req, res) => {
   if (req.session.user) {
     // 로그아웃 시 activeUsers에서 제거
     activeUsers.delete(req.session.user.id);
-    log(`로그아웃: ${req.session.user.name} (${req.session.user.id})`);
+    log(`로그아웃: ${req.session.user.name} (${req.session.user.id})`, req.sessionID);
   }
   req.session.destroy(() => {
     res.json({ success: true });
