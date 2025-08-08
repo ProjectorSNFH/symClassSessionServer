@@ -49,6 +49,12 @@ app.use((req, res, next) => {
   next();
 });
 
+// 정기적으로 activeUsers 정리 (세션이 없어진 사용자 제거)
+setInterval(() => {
+  // 이 메커니즘은 단순한 체크이며, production에서는 store-based session 관리 권장
+  // 클라이언트가 확인 요청을 보낼 때만 정확하게 반영되므로, 아래 기능은 보조용
+}, 60000); // 1분 주기 (비워둠)
+
 // 로그인 API
 app.post("/login", (req, res) => {
   const { username, password } = req.body;
@@ -93,6 +99,11 @@ app.post("/logout", (req, res) => {
 // 현재 로그인된 사용자 정보
 app.get("/me", (req, res) => {
   if (req.session.user) {
+    // 세션이 있지만 activeUsers에 없으면 비정상 세션 → 세션 제거
+    if (!activeUsers.has(req.session.user.id)) {
+      req.session.destroy(() => {});
+      return res.json({ loggedIn: false });
+    }
     res.json({ loggedIn: true, user: req.session.user });
   } else {
     res.json({ loggedIn: false });
