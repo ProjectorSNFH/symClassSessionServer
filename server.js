@@ -110,6 +110,10 @@ app.post("/logout", (req, res) => {
     log(`로그아웃: ${req.session.user.name} (${req.session.user.id})`, req.sessionID);
   }
   req.session.destroy(() => {
+    // 세션에 user가 없었던 경우(비로그인 상태에서의 로그아웃 요청) 로그 기록
+    if (!req.session.user) {
+      log(`로그아웃 요청 (세션 정보 없음)`, req.sessionID);
+    }
     res.json({ success: true });
   });
 });
