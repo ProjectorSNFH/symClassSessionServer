@@ -165,7 +165,7 @@ app.get("/", (req, res) => {
               const res = await fetch('/current-users');
               const text = await res.text();
               output.textContent = text;
-            } else if {
+            } else if (command === 'log') {
               output.textContent = '로그 준비 중입니다.';
             }  else {
               output.textContent = '지원하지 않는 명령어입니다.';
