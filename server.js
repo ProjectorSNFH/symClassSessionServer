@@ -104,14 +104,13 @@ app.post("/login", (req, res) => {
 
 // 로그아웃 API
 app.post("/logout", (req, res) => {
-  if (req.session.user) {
-    // 로그아웃 시 userSessions에서 제거
-    userSessions.delete(req.session.user.id);
-    log(`로그아웃: ${req.session.user.name} (${req.session.user.id})`, req.sessionID);
-  }
+  // 세션 파괴 전에 user 정보 복사
+  const userInfo = req.session.user ? { ...req.session.user } : null;
   req.session.destroy(() => {
-    // 세션에 user가 없었던 경우(비로그인 상태에서의 로그아웃 요청) 로그 기록
-    if (!req.session.user) {
+    if (userInfo) {
+      userSessions.delete(userInfo.id);
+      log(`로그아웃: ${userInfo.name} (${userInfo.id})`, req.sessionID);
+    } else {
       log(`로그아웃 요청 (세션 정보 없음)`, req.sessionID);
     }
     res.json({ success: true });
