@@ -138,6 +138,7 @@ app.get("/log", (req, res) => {
 });
 
 // 관리자용 루트 페이지 제공
+let userButton;
 app.get("/", (req, res) => {
   res.send(`
     <!DOCTYPE html>
@@ -157,8 +158,20 @@ app.get("/", (req, res) => {
       <pre id="output"></pre>
 
       <script>
+        let userButton;
         const input = document.getElementById('cmdInput');
         const output = document.getElementById('output');
+
+        (async () => {
+          const res = await fetch('/me');
+          const data = await res.json();
+          if (!data.loggedIn) {
+            output.textContent = '로그인 필요';
+          } else {
+            userButton = document.getElementById('userButton');
+            userButton.textContent = '사용자: ' + data.user.name;
+          }
+        })();
 
         input.addEventListener('keydown', async (e) => {
           if (e.key === 'Enter') {
