@@ -183,7 +183,12 @@ app.get("/", (req, res) => {
               output.textContent = text;
             } else if (command === 'log') {
               output.textContent = '로그 준비 중입니다.';
-            }  else {
+            }  else if (command.startsWith('logout ')) {
+              const id = command.split(' ')[1];
+              const res = await fetch('/force-logout/' + encodeURIComponent(id));
+              const text = await res.text();
+              output.textContent = text;
+            } else {
               output.textContent = '지원하지 않는 명령어입니다.';
             }
           }
@@ -209,4 +214,30 @@ app.get("/current-users", (req, res) => {
 app.listen(PORT, () => {
   console.log(`SessionServer is running on port ${PORT}`);
   log("서버 시작됨");
+});
+
+// 강제 로그아웃 API
+app.get("/force-logout/:id", (req, res) => {
+  const id = req.params.id;
+
+  if (!userSessions.has(id)) {
+    return res.send("해당 사용자가 없습니다.");
+  }
+
+  const info = userSessions.get(id);
+  const sessionID = info.sessionID;
+
+  // 세션 스토어에서 제거
+  if (req.sessionStore && typeof req.sessionStore.destroy === 'function') {
+    req.sessionStore.destroy(sessionID, (err) => {
+      if (err) {
+        return res.send("세션 삭제 중 오류가 발생했습니다.");
+      }
+      userSessions.delete(id);
+      log(`${id} ${sessionID} 강제 로그아웃 처리`, sessionID);
+      res.send(`${id} 로그아웃 처리됨.`);
+    });
+  } else {
+    res.send("세션 스토어를 사용할 수 없습니다.");
+  }
 });
