@@ -13,7 +13,7 @@ const students = [
     name: "권윤서",
     id: "sym01",
     password: "pw01",
-    role: "DTM_A"
+    role: "NAS"
   },
   {
     number: 2,
