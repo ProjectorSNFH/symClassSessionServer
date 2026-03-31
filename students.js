@@ -1,12 +1,13 @@
 // students.js
 
 const students = [
+  
   {
-    number: "♾️",
-    name: "관리자",
-    id: "admin",
-    password: "admin123",
-    role: "ADM"
+    number: 0,
+    name: "게스트",
+    id: "guest",
+    password: "guest",
+    role: "NAS"
   },
   {
     number: 1,
